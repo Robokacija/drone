@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Igra</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        #gameCanvas {
+            background-color: #000;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let snake = [{x: 160, y: 160}, {x: 140, y: 160}, {x: 120, y: 160}, {x: 100, y: 160}];
+        let dx = 20;
+        let dy = 0;
+        let foodX = 0;
+        let foodY = 0;
+        let changingDirection = false;
+        let score = 0;
+        let highScore = loadHighScore();
+        let highScoreName = loadHighScoreName();  // Load the name of the high scorer
+        let gameLoop;
+        let gameRunning = false;
+
+        document.addEventListener("keydown", changeDirection);
+
+        function loadHighScore() {
+            return localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore'), 10) : 0;
+        }
+
+        function loadHighScoreName() {
+            return localStorage.getItem('highScoreName') || 'Nobody';  // Default to 'Nobody' if no score is saved
+        }
+
+        function saveHighScore() {
+            localStorage.setItem('highScore', highScore);
+            localStorage.setItem('highScoreName', highScoreName);
+        }
+
+        function main() {
+            if (didGameEnd()) {
+                gameRunning = false;
+                if (score > highScore) {
+                    highScore = score;
+                    highScoreName = prompt("New High Score! Enter your name:", "") || highScoreName;  // Ask for the player's name
+                    saveHighScore();
+                }
+                displayGameOver();
+                return;
+            }
+
+            if (!gameRunning) {
+                initializeGameVariables();  
+                return;
+            }
+
+            changingDirection = false;
+            gameLoop = setTimeout(function onTick() {
+                clearCanvas();
+                moveSnake();
+                drawFood();
+                drawSnake();
+                drawScore();
+                main();
+            }, 100);
+        }
+
+        function resetGame() {
+            clearTimeout(gameLoop);  // Stop the current game loop
+            initializeGameVariables();  // Reset game state
+            gameRunning = true;  // Mark the game as running
+            main();  // Start the game loop
+        }
+
+        function initializeGameVariables() {
+            snake = [{x: 160, y: 160}, {x: 140, y: 160}, {x: 120, y: 160}, {x: 100, y: 160}];
+            dx = 20;
+            dy = 0;
+            score = 0;
+            changingDirection = false;
+            createFood();  // Create a new food item
+        }
+
+        function displayGameOver() {
+            ctx.font = "30px Arial";
+            ctx.fillStyle = "red";
+            ctx.textAlign = "center";
+            ctx.fillText("Game Over! Your score: " + score + ", High Score by " + highScoreName + ": " + highScore, canvas.width / 2, canvas.height / 2);
+        }
+
+        function changeDirection(event) {
+            if (event.keyCode === 32) {
+                gameRunning = false;
+                resetGame();
+                event.preventDefault();
+                return;
+            }
+
+            if (changingDirection || !gameRunning) return;
+            changingDirection = true;
+            handleDirectionChange(event.keyCode);
+        }
+
+        function handleDirectionChange(keyCode) {
+            const goingUp = dy === -20;
+            const goingDown = dy === 20;
+            const goingRight = dx === 20;
+            const goingLeft = dx === -20;
+
+            switch (keyCode) {
+                case 37: if (!goingRight) { dx = -20; dy = 0; } break;
+                case 38: if (!goingDown) { dx = 0; dy = -20; } break;
+                case 39: if (!goingLeft) { dx = 20; dy = 0; } break;
+                case 40: if (!goingUp) { dx = 0; dy = 20; } break;
+            }
+            event.preventDefault();
+        }
+
+        function didGameEnd() {
+            for (let i = 4; i < snake.length; i++) {
+                const didCollide = snake[i].x === snake[0].x && snake[i].y === snake[0].y;
+                if (didCollide) return true;
+            }
+            const hitLeftWall = snake[0].x < 0;
+            const hitRightWall = snake[0].x > canvas.width - 20;
+            const hitTopWall = snake[0].y < 0;
+            const hitBottomWall = snake[0].y > canvas.height - 20;
+
+            return hitLeftWall || hitRightWall || hitTopWall || hitBottomWall;
+        }
+
+        function clearCanvas() {
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function drawSnake() {
+            snake.forEach(part => {
+                ctx.fillStyle = 'lightgreen';
+                ctx.strokeStyle = 'darkgreen';
+                ctx.fillRect(part.x, part.y, 20, 20);
+                ctx.strokeRect(part.x, part.y, 20, 20);
+            });
+        }
+
+        function moveSnake() {
+            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+            snake.unshift(head);
+            if (snake[0].x === foodX && snake[0].y === foodY) {
+                score += 10;
+                createFood();
+            } else {
+                snake.pop();
+            }
+        }
+
+        function createFood() {
+            foodX = Math.floor(Math.random() * ((canvas.width - 20) / 20)) * 20;
+            foodY = Math.floor(Math.random() * ((canvas.height - 20) / 20)) * 20;
+            console.log(foodX, foodY); // Log the food coordinates to verify they are within visible bounds
+        }
+
+        function drawFood() {
+            ctx.fillStyle = 'red';
+            ctx.fillRect(foodX, foodY, 20, 20);
+            console.log("Food drawn at:", foodX, foodY); // Verify that drawFood is called
+        }
+
+        function drawScore() {
+            ctx.fillStyle = 'white';
+            ctx.font = '16px Arial';
+            ctx.fillText("Bodovi: " + score, canvas.width - 120, 30);
+            ctx.fillText("High Score: " + highScore + " by " + highScoreName, canvas.width - 120, 50);
+        }
+    </script>
+</body>
+</html>
