@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Igra</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 300vh;
+            background-color: #f0f0f0;
+        }
+        #gameCanvas {
+            background-color: #000;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let snake1 = [{x: 160, y: 160}, {x: 140, y: 160}, {x: 120, y: 160}];
+        let snake2 = [{x: 160, y: 200}, {x: 140, y: 200}, {x: 120, y: 200}];  // Second snake
+        let dx1 = 20, dy1 = 0;
+        let dx2 = 20, dy2 = 0;  // Movement for second snake
+        let foodX, foodY;
+        let changingDirection1 = false;
+        let changingDirection2 = false;  // Direction change flag for second snake
+        let score1 = 0, score2 = 0;  // Scores for both snakes
+        let gameLoop;
+        let gameRunning = false;
+		
+
+        document.addEventListener("keydown", changeDirection);
+
+        createFood();
+		
+		function main() {
+            if (didGameEnd()) {
+                gameRunning = false;
+                displayGameOver();
+                return;
+            }
+
+            if (!gameRunning) return;
+			            changingDirection1 = false;
+            changingDirection2 = false;
+
+            gameLoop = setTimeout(function onTick() {
+                clearCanvas();
+                moveSnake(snake1, dx1, dy1,1);
+                moveSnake(snake2, dx2, dy2,2);
+				checkCollision(snake1,snake2,dx1,dy1);
+                drawSnake(snake1, 'lightgreen', 'darkgreen');
+                drawSnake(snake2, 'lightblue', 'darkblue');
+                drawFood();
+                drawScore();
+                main();
+            }, 200);
+        }
+
+        function changeDirection(event) {
+            if (event.keyCode === 32) {
+                resetGame();
+                event.preventDefault();
+                return;
+            }
+            if (!gameRunning) return;
+
+			if (!changingDirection2){
+            switch (event.keyCode) {
+                case 87: if (dy2 !== 20) { dy2 = -20; dx2 = 0;             changingDirection2 = true;
+} break;  // W
+                case 83: if (dy2 !== -20) { dy2 = 20; dx2 = 0;             changingDirection2 = true;
+} break;  // S
+                case 65: if (dx2 !== 20) { dx2 = -20; dy2 = 0;             changingDirection2 = true;
+} break;  // A
+                case 68: if (dx2 !== -20) { dx2 = 20; dy2 = 0;             changingDirection2 = true;
+} break;  // D
+}
+}
+			if (!changingDirection1){
+				switch (event.keyCode) {
+					case 38: if (dy1 !== 20) { dy1 = -20; dx1 = 0; changingDirection1 = true;} break;  // Up
+					case 40: if (dy1 !== -20) { dy1 = 20; dx1 = 0; changingDirection1 = true;} break;  // Down
+					case 37: if (dx1 !== 20) { dx1 = -20; dy1 = 0; changingDirection1 = true;} break;  // Left
+					case 39: if (dx1 !== -20) { dx1 = 20; dy1 = 0; changingDirection1 = true;} break;  // Right
+            }
+			}
+
+            event.preventDefault();
+        }
+
+        function moveSnake(snake, dx, dy, snakeNumber) {
+			const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+			snake.unshift(head); // Add new head to the snake
+
+			// Check if the new head's position matches the food's position
+			if (head.x === foodX && head.y === foodY) {
+				if (snakeNumber === 1) {
+					score1 += 10; // Increment score for snake 1
+				} else {
+					score2 += 10; // Increment score for snake 2
+				}
+				createFood(); // Create new food because the old one was eaten
+			} else {
+				snake.pop(); // Remove the last part of the snake if no food was eaten
+			}
+		}
+			
+		function checkCollision(snake1,snake2,dx,dy){
+			for (let i = 1; i < snake1.length; i++) {
+				if (snake1[i].x === snake2[0].x && snake1[i].y === snake2[0].y) {
+					score1=10*i;
+					score2+=10;
+					const head2 = {x: snake2[0].x + dx, y: snake2[0].y + dy};
+					snake2.unshift(head2); // Add new head to the snake
+					for (let j=i; j<snake1.length; j++){
+						ctx.fillStyle = 'red';
+						ctx.fillRect(snake1[j].x, snake1[j].y, 20, 20);
+						snake1.pop();
+					}
+					console.log("HIT1");
+				}
+			}
+			for (let i = 1; i < snake2.length; i++) {
+				if (snake2[i].x === snake1[0].x && snake2[i].y === snake1[0].y) {
+					score2=10*i;
+					score1+=10;
+					const head1 = {x: snake1[0].x + dx, y: snake1[0].y + dy};
+					snake1.unshift(head1); // Add new head to the snake
+					for (let j=i; j<snake2.length; j++){
+						ctx.fillStyle = 'red';
+						ctx.fillRect(snake2[j].x, snake2[j].y, 20, 20);
+						snake2.pop();
+					}
+					console.log("HIT2");
+				}
+			}
+		}
+		
+        function drawSnake(snake, fillColor, strokeColor) {
+            snake.forEach(part => {
+                ctx.fillStyle = fillColor;
+                ctx.strokeStyle = strokeColor;
+                ctx.fillRect(part.x, part.y, 20, 20);
+                ctx.strokeRect(part.x, part.y, 20, 20);
+            });
+        }
+
+        function createFood() {
+			let overlap;
+			do {
+				overlap = false;
+				foodX = Math.floor(Math.random() * ((canvas.width - 20) / 20)) * 20;
+				foodY = Math.floor(Math.random() * ((canvas.height - 20) / 20)) * 20;
+
+				// Check overlap with snake1 and snake2
+				[snake1, snake2].forEach(snake => {
+					snake.forEach(segment => {
+						if (segment.x === foodX && segment.y === foodY) {
+							overlap = true;
+						}
+					});
+				});
+			} while (overlap); // Repeat if overlap is true
+
+			console.log("Food placed at:", foodX, foodY); // Log the food's position
+}
+
+
+        function drawFood() {
+            ctx.fillStyle = 'red';
+            ctx.fillRect(foodX, foodY, 20, 20);
+        }
+
+        function drawScore() {
+            ctx.fillStyle = 'white';
+            ctx.font = '16px Arial';
+            ctx.fillText("Score1: " + score1, 10, 20);
+            ctx.fillText("Score2: " + score2, 10, 40);
+        }
+
+        function didGameEnd() {
+            for (let snake of [snake1, snake2]) {
+                for (let i = 4; i < snake.length; i++) {
+                    if (snake[i].x === snake[0].x && snake[i].y === snake[0].y) {
+						if (snake===snake1) score1=0; else score2=0;
+							clearCanvas();
+							moveSnake(snake1, dx1, dy1,1);
+							moveSnake(snake2, dx2, dy2,2);
+							checkCollision(snake1,snake2,dx1,dy1);
+							drawSnake(snake1, 'lightgreen', 'darkgreen');
+							drawSnake(snake2, 'lightblue', 'darkblue');
+							drawFood();
+							drawScore();
+						return true;
+					}
+                
+				}
+            }
+            return snake1[0].x < 0 || snake1[0].x >= canvas.width || snake1[0].y < 0 || snake1[0].y >= canvas.height ||
+                   snake2[0].x < 0 || snake2[0].x >= canvas.width || snake2[0].y < 0 || snake2[0].y >= canvas.height;
+        }
+
+        function resetGame() {
+            clearTimeout(gameLoop);
+            snake1 = [{x: 160, y: 160}, {x: 140, y: 160}, {x: 120, y: 160}];
+            snake2 = [{x: 160, y: 200}, {x: 140, y: 200}, {x: 120, y: 200}];
+            dx1 = dx2 = 20; dy1 = dy2 = 0;
+            score1 = score2 = 0;
+            gameRunning = true;
+            main();
+        }
+
+		function clearCanvas() {
+			ctx.fillStyle = 'black';
+			ctx.fillRect(0, 0, canvas.width, canvas.height);
+		}
+		
+        function displayGameOver() {
+            ctx.font = "30px Arial";
+            ctx.fillStyle = "red";
+            ctx.fillText("Game Over!", canvas.width / 2, canvas.height / 2);
+        }
+
+        main();
+    </script>
+</body>
+</html>
