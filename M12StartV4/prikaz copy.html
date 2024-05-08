@@ -1,0 +1,60 @@
+<!DOCTYPE HTML>
+<html>
+<body>
+  <h3>Motor Control for Testing</h3>
+  PWM1: <input type="range" min="0" max="255" step="1" id="pwm1"><span id="pwm1Val">0</span><br>
+  PWM2: <input type="range" min="0" max="255" step="1" id="pwm2"><span id="pwm2Val">0</span><br>
+  PWM3: <input type="range" min="0" max="255" step="1" id="pwm3"><span id="pwm3Val">0</span><br>
+  PWM4: <input type="range" min="0" max="255" step="1" id="pwm4"><span id="pwm4Val">0</span><br>
+
+  
+  <h3>X Axis</h3>
+  KpX: <input type="range" min="0" max="6" step="0.1" id="KpX" value="2.5"><span id="KpXVal">2.5</span><br>
+  KiX: <input type="range" min="0" max="2" step="0.1" id="KiX" value="1"><span id="KiXVal">1</span><br>
+  KdX: <input type="range" min="0" max="2" step="0.1" id="KdX" value="0"><span id="KdXVal">0</span><br>
+  SetPointX: <input type="range" min="-30" max="30" step="1" id="SetPointX" value="0"><span id="SpXVal">0</span><br>
+
+  <h3>Y Axis</h3>
+  KpY: <input type="range" min="0" max="6" step="0.1" id="KpY" value="2.5"><span id="KpYVal">2.5</span><br>
+  KiY: <input type="range" min="0" max="2" step="0.1" id="KiY" value="1"><span id="KiYVal">1</span><br>
+  KdY: <input type="range" min="0" max="2" step="0.1" id="KdY" value="0"><span id="KdYVal">0</span><br>
+  SetPointY: <input type="range" min="-30" max="30" step="1" id="SetPointY" value="0"><span id="SpYVal">0</span><br>
+
+  <h3>Z Axis</h3>
+  KpZ: <input type="range" min="0" max="6" step="0.1" id="KpZ" value="2.5"><span id="KpZVal">2.5</span><br>
+  KiZ: <input type="range" min="0" max="2" step="0.1" id="KiZ" value="1"><span id="KiZVal">1</span><br>
+  KdZ: <input type="range" min="0" max="2" step="0.1" id="KdZ" value="0"><span id="KdZVal">0</span><br>
+  SetPointZ: <input type="range" min="-30" max="30" step="1" id="SetPointZ" value="0"><span id="SpZVal">0</span><br>
+
+
+  <script>
+  function setupSlider(sliderId, valueId, urlPath) {
+    var slider = document.getElementById(sliderId);
+    var valueSpan = document.getElementById(valueId);
+    slider.oninput = function() {
+      fetch('/' + urlPath + '?value=' + this.value);
+      valueSpan.textContent = this.value;
+    }
+  }
+
+  setupSlider("pwm1", "pwm1Val", "setPWM1");
+  setupSlider("pwm2", "pwm2Val", "setPWM2");
+  setupSlider("pwm3", "pwm3Val", "setPWM3");
+  setupSlider("pwm4", "pwm4Val", "setPWM4");
+
+  setupSlider("KpX", "KpXVal", "setKpX");
+  setupSlider("KiX", "KiXVal", "setKiX");
+  setupSlider("KdX", "KdXVal", "setKdX");
+  setupSlider("SetPointX", "SpXVal", "setSetPointX");
+
+  setupSlider("KpY", "KpYVal", "setKpY");
+  setupSlider("KiY", "KiYVal", "setKiY");
+  setupSlider("KdY", "KdYVal", "setKdY");
+  setupSlider("SetPointY", "SpYVal", "setSetPointY");
+
+  setupSlider("KpZ", "KpZVal", "setKpZ");
+  setupSlider("KiZ", "KiZVal", "setKiZ");
+  setupSlider("KdZ", "KdZVal", "setKdZ");
+  setupSlider("SetPointZ", "SpZVal", "setSetPointZ");
+  </script>
+</body></html>
